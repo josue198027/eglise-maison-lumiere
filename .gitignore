@@ -1,0 +1,4 @@
+node_modules/
+eglise.db
+.env
+*.log

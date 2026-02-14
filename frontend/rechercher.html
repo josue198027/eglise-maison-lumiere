@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rechercher des membres - Église de Dieu Maison de Lumière</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-left">
+        <img src="images/logo.png" alt="Logo" class="nav-logo" onerror="this.style.display='none'">
+        <span class="nav-title">Église de Dieu - Maison de Lumière</span>
+      </div>
+      <div class="nav-right">
+        <span class="user-name" id="userName"></span>
+        <button onclick="window.location.href='/dashboard.html'" class="btn btn-secondary">Retour</button>
+        <button onclick="deconnexion()" class="btn btn-secondary">Déconnexion</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenu principal -->
+  <div class="container">
+    <h1 class="page-title">Rechercher et consulter les membres</h1>
+
+    <!-- Barre de recherche -->
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Rechercher par nom, prénom, email ou téléphone..." class="search-input">
+      <button onclick="rechercher()" class="btn btn-primary">Rechercher</button>
+      <button onclick="voirTous()" class="btn btn-secondary">Voir tous</button>
+    </div>
+
+    <!-- Message -->
+    <div id="message" class="message" style="display: none;"></div>
+
+    <!-- Résultats -->
+    <div id="resultats" class="membres-grid"></div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Vérifier l'authentification
+    verifierAuth();
+    afficherNomUtilisateur();
+
+    // Charger tous les membres au démarrage
+    voirTous();
+
+    // Recherche en temps réel
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const query = e.target.value.trim();
+      if (query.length > 0) {
+        rechercher();
+      } else {
+        voirTous();
+      }
+    });
+
+    // Rechercher avec la touche Entrée
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        rechercher();
+      }
+    });
+
+    async function rechercher() {
+      const query = document.getElementById('searchInput').value.trim();
+      
+      if (!query) {
+        voirTous();
+        return;
+      }
+
+      try {
+        const membres = await fetchAPI(`/api/membres/rechercher/query?q=${encodeURIComponent(query)}`);
+        afficherMembres(membres);
+      } catch (error) {
+        afficherMessage('Erreur lors de la recherche', 'error');
+      }
+    }
+
+    async function voirTous() {
+      try {
+        const membres = await fetchAPI('/api/membres');
+        afficherMembres(membres);
+      } catch (error) {
+        afficherMessage('Erreur lors du chargement des membres', 'error');
+      }
+    }
+
+    function afficherMembres(membres) {
+      const resultatsDiv = document.getElementById('resultats');
+
+      if (membres.length === 0) {
+        resultatsDiv.innerHTML = '<p class="no-results">Aucun membre trouvé</p>';
+        return;
+      }
+
+      resultatsDiv.innerHTML = membres.map(membre => `
+        <div class="membre-card">
+          <div class="membre-header">
+            <h3>${membre.nom} ${membre.prenom}</h3>
+          </div>
+          <div class="membre-info">
+            ${membre.phone ? `<p><strong>📞 Téléphone:</strong> ${membre.phone}</p>` : ''}
+            ${membre.email ? `<p><strong>📧 Email:</strong> ${membre.email}</p>` : ''}
+            ${membre.adresse ? `<p><strong>📍 Adresse:</strong> ${membre.adresse}</p>` : ''}
+            ${membre.statut_matrimonial ? `<p><strong>💑 Statut:</strong> ${membre.statut_matrimonial}</p>` : ''}
+            ${membre.nombre_enfants !== null ? `<p><strong>👶 Enfants:</strong> ${membre.nombre_enfants}</p>` : ''}
+            ${membre.nationalite ? `<p><strong>🌍 Nationalité:</strong> ${membre.nationalite}</p>` : ''}
+            ${membre.langue_parlee ? `<p><strong>🗣️ Langue:</strong> ${membre.langue_parlee}</p>` : ''}
+            ${membre.niveau_etude ? `<p><strong>🎓 Niveau d'étude:</strong> ${membre.niveau_etude}</p>` : ''}
+          </div>
+          <div class="membre-actions">
+            <button onclick="modifierMembre(${membre.id})" class="btn btn-primary btn-sm">Modifier</button>
+            <button onclick="supprimerMembre(${membre.id}, '${membre.nom} ${membre.prenom}')" class="btn btn-danger btn-sm">Supprimer</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function modifierMembre(id) {
+      window.location.href = `/modifier.html?id=${id}`;
+    }
+
+    async function supprimerMembre(id, nom) {
+      if (!confirm(`Êtes-vous sûr de vouloir supprimer ${nom} ?`)) {
+        return;
+      }
+
+      try {
+        await fetchAPI(`/api/membres/${id}`, {
+          method: 'DELETE'
+        });
+
+        afficherMessage('Membre supprimé avec succès', 'success');
+        voirTous();
+      } catch (error) {
+        afficherMessage('Erreur lors de la suppression', 'error');
+      }
+    }
+
+    function afficherMessage(texte, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.className = `message ${type}`;
+      messageDiv.textContent = texte;
+      messageDiv.style.display = 'block';
+
+      setTimeout(() => {
+        messageDiv.style.display = 'none';
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

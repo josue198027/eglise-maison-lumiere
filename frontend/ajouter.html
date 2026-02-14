@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajouter un membre - Église de Dieu Maison de Lumière</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-left">
+        <img src="images/logo.png" alt="Logo" class="nav-logo" onerror="this.style.display='none'">
+        <span class="nav-title">Église de Dieu - Maison de Lumière</span>
+      </div>
+      <div class="nav-right">
+        <span class="user-name" id="userName"></span>
+        <button onclick="window.location.href='/dashboard.html'" class="btn btn-secondary">Retour</button>
+        <button onclick="deconnexion()" class="btn btn-secondary">Déconnexion</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenu principal -->
+  <div class="container">
+    <h1 class="page-title">Ajouter un nouveau membre</h1>
+
+    <div class="form-container">
+      <form id="ajouterMembreForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nom">Nom <span class="required">*</span></label>
+            <input type="text" id="nom" name="nom" required placeholder="Nom de famille">
+          </div>
+
+          <div class="form-group">
+            <label for="prenom">Prénom <span class="required">*</span></label>
+            <input type="text" id="prenom" name="prenom" required placeholder="Prénom">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">Téléphone</label>
+            <input type="tel" id="phone" name="phone" placeholder="+1 (XXX) XXX-XXXX">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="exemple@email.com">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="adresse">Adresse</label>
+          <textarea id="adresse" name="adresse" rows="3" placeholder="Adresse complète"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="statut_matrimonial">Statut matrimonial</label>
+            <select id="statut_matrimonial" name="statut_matrimonial">
+              <option value="">Sélectionner...</option>
+              <option value="Célibataire">Célibataire</option>
+              <option value="Marié(e)">Marié(e)</option>
+              <option value="Divorcé(e)">Divorcé(e)</option>
+              <option value="Veuf/Veuve">Veuf/Veuve</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="nombre_enfants">Nombre d'enfants</label>
+            <input type="number" id="nombre_enfants" name="nombre_enfants" min="0" placeholder="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nationalite">Nationalité</label>
+            <input type="text" id="nationalite" name="nationalite" placeholder="Nationalité">
+          </div>
+
+          <div class="form-group">
+            <label for="langue_parlee">Langue parlée</label>
+            <input type="text" id="langue_parlee" name="langue_parlee" placeholder="Français, Anglais, etc.">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="niveau_etude">Niveau d'étude</label>
+          <select id="niveau_etude" name="niveau_etude">
+            <option value="">Sélectionner...</option>
+            <option value="Primaire">Primaire</option>
+            <option value="Secondaire">Secondaire</option>
+            <option value="Universitaire">Universitaire</option>
+            <option value="Post-universitaire">Post-universitaire</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+
+        <div id="message" class="message" style="display: none;"></div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+          <button type="button" onclick="window.location.href='/dashboard.html'" class="btn btn-secondary">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Vérifier l'authentification
+    verifierAuth();
+    afficherNomUtilisateur();
+
+    document.getElementById('ajouterMembreForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = {
+        nom: document.getElementById('nom').value,
+        prenom: document.getElementById('prenom').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        adresse: document.getElementById('adresse').value,
+        statut_matrimonial: document.getElementById('statut_matrimonial').value,
+        nombre_enfants: parseInt(document.getElementById('nombre_enfants').value) || 0,
+        nationalite: document.getElementById('nationalite').value,
+        langue_parlee: document.getElementById('langue_parlee').value,
+        niveau_etude: document.getElementById('niveau_etude').value
+      };
+
+      const messageDiv = document.getElementById('message');
+
+      try {
+        const data = await fetchAPI('/api/membres', {
+          method: 'POST',
+          body: JSON.stringify(formData)
+        });
+
+        messageDiv.className = 'message success';
+        messageDiv.textContent = 'Membre ajouté avec succès !';
+        messageDiv.style.display = 'block';
+
+        // Réinitialiser le formulaire
+        document.getElementById('ajouterMembreForm').reset();
+
+        // Rediriger après 2 secondes
+        setTimeout(() => {
+          window.location.href = '/dashboard.html';
+        }, 2000);
+      } catch (error) {
+        messageDiv.className = 'message error';
+        messageDiv.textContent = error.message || 'Erreur lors de l\'ajout du membre';
+        messageDiv.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
