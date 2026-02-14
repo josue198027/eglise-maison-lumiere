@@ -2,6 +2,16 @@
 
 Application web complète pour la gestion des membres de l'Église de Dieu Maison de Lumière avec authentification sécurisée.
 
+## 🔗 Accès rapide à l'application
+
+**URL principale:** http://localhost:3000/login.html
+
+**Comptes de connexion:**
+- **Admin:** admin@eglise.com / admin123
+- **Pasteur:** pasteur@eglise.com / pasteur123
+
+> ⚠️ Le serveur doit être démarré avec `npm start` depuis le dossier `backend/`
+
 ## 📋 Fonctionnalités
 
 ### Authentification
