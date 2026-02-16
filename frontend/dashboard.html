@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Église de Dieu Maison de Lumière</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-left">
+        <img src="images/logo.png" alt="Logo" class="nav-logo" onerror="this.style.display='none'">
+        <span class="nav-title">Église de Dieu - Maison de Lumière</span>
+      </div>
+      <div class="nav-right">
+        <span class="user-name" id="userName"></span>
+        <button onclick="deconnexion()" class="btn btn-secondary">Déconnexion</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenu principal -->
+  <div class="container">
+    <h1 class="page-title">Tableau de bord</h1>
+
+    <!-- Statistiques -->
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+          <h3>Membres totaux</h3>
+          <p class="stat-number" id="totalMembres">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menu des actions -->
+    <div class="cards-grid">
+      <div class="menu-card" onclick="window.location.href='/ajouter.html'">
+        <div class="card-icon">➕</div>
+        <h3>Ajouter un membre</h3>
+        <p>Enregistrer un nouveau membre de l'église</p>
+      </div>
+
+      <div class="menu-card" onclick="window.location.href='/rechercher.html'">
+        <div class="card-icon">🔍</div>
+        <h3>Rechercher des membres</h3>
+        <p>Rechercher et consulter la liste des membres</p>
+      </div>
+
+      <div class="menu-card" onclick="window.location.href='/rechercher.html'">
+        <div class="card-icon">✏️</div>
+        <h3>Modifier des membres</h3>
+        <p>Modifier ou supprimer les informations d'un membre</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    // Vérifier l'authentification
+    verifierAuth();
+    afficherNomUtilisateur();
+
+    // Charger les statistiques
+    async function chargerStatistiques() {
+      try {
+        const data = await fetchAPI('/api/statistiques');
+        document.getElementById('totalMembres').textContent = data.total_membres;
+      } catch (error) {
+        console.error('Erreur lors du chargement des statistiques:', error);
+      }
+    }
+
+    chargerStatistiques();
+  </script>
+</body>
+</html>

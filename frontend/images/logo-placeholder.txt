@@ -1,0 +1,15 @@
+<!-- 
+  Logo de l'Église de Dieu Maison de Lumière
+  
+  Veuillez placer votre logo d'église ici.
+  
+  Dimensions recommandées:
+  - Format: PNG avec transparence
+  - Taille: 120x120 pixels (ou proportions similaires)
+  - Le logo sera automatiquement redimensionné selon les besoins
+  
+  Pour ajouter votre logo:
+  1. Renommez votre fichier logo en "logo.png"
+  2. Remplacez ce fichier par votre logo
+  3. Le logo apparaîtra automatiquement sur toutes les pages
+-->
