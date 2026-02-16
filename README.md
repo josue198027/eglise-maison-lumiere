@@ -158,7 +158,7 @@ Modifiez les variables dans `frontend/css/style.css` :
 
 Dans `backend/server.js`, changez :
 ```javascript
-const SECRET_KEY = 'votre_cle_secrete_eglise_2026';
+const SECRET_KEY = 'Forestal@2025';
 ```
 
 **⚠️ Important :** Utilisez une clé complexe et unique en production !
