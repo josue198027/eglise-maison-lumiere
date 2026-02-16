@@ -1,4 +1,5 @@
 node_modules/
 eglise.db
 .env
+backend/.env
 *.log

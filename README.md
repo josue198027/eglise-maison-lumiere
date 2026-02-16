@@ -44,9 +44,9 @@ Application web complète pour la gestion des membres de l'Église de Dieu Maiso
 eglise-maison-lumiere/
 ├── backend/
 │   ├── package.json          # Dépendances Node.js
-│   ├── database.js           # Configuration SQLite et tables
+│   ├── database.js           # Configuration Supabase
 │   ├── server.js             # Serveur Express et API
-│   └── eglise.db            # Base de données (créée automatiquement)
+│   └── .env.example         # Variables d'environnement (exemple)
 ├── frontend/
 │   ├── login.html           # Page de connexion
 │   ├── dashboard.html       # Tableau de bord
@@ -60,8 +60,26 @@ eglise-maison-lumiere/
 │   └── images/
 │       └── logo.png         # Logo de l'église (à ajouter)
 ├── .gitignore
-└── README.md
+├── README.md
+└── SUPABASE_SETUP.md       # Guide de configuration Supabase
 ```
+
+## 🗄️ Base de données
+
+Cette application utilise **Supabase** (PostgreSQL) comme base de données.
+
+### Configuration
+
+Consultez le fichier [SUPABASE_SETUP.md](SUPABASE_SETUP.md) pour les instructions complètes de configuration.
+
+### Avantages de Supabase
+
+- ✅ Base de données PostgreSQL robuste
+- ✅ Interface web pour visualiser les données
+- ✅ API REST automatique
+- ✅ Temps réel
+- ✅ Gratuit jusqu'à 500 MB
+- ✅ Sauvegarde automatique
 
 ## 🚀 Installation
 
@@ -109,11 +127,12 @@ Deux comptes administrateurs sont créés automatiquement :
 ### Backend
 - **Node.js** - Environnement d'exécution JavaScript
 - **Express** - Framework web
-- **SQLite3** - Base de données
+- **Supabase** - Base de données PostgreSQL cloud
 - **bcryptjs** - Hashing des mots de passe
 - **jsonwebtoken** - Authentification JWT
 - **cors** - Gestion des requêtes cross-origin
 - **body-parser** - Parsing des requêtes
+- **dotenv** - Gestion des variables d'environnement
 
 ### Frontend
 - **HTML5** - Structure
