@@ -1,89 +1,41 @@
-const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcryptjs');
-const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
-// Créer ou ouvrir la base de données
-const dbPath = path.join(__dirname, 'eglise.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Erreur lors de la connexion à la base de données:', err);
-  } else {
-    console.log('✅ Connexion à la base de données SQLite réussie');
-  }
-});
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 
-// Créer les tables
-db.serialize(() => {
-  // Table utilisateurs
-  db.run(`CREATE TABLE IF NOT EXISTS utilisateurs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    mot_de_passe TEXT NOT NULL,
-    nom TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`, (err) => {
-    if (err) {
-      console.error('Erreur lors de la création de la table utilisateurs:', err);
-    } else {
-      console.log('✅ Table utilisateurs créée ou déjà existante');
+if (!supabaseUrl || !supabaseKey) {
+    console.error('❌ ERREUR: Variables d\'environnement Supabase manquantes');
+    console.log('👉 Configurez SUPABASE_URL et SUPABASE_KEY dans les variables d\'environnement');
+    process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Fonction pour initialiser la base de données
+async function initDatabase() {
+    console.log('🔄 Vérification de la connexion à Supabase...');
+    
+    try {
+        // Test de connexion
+        const { data, error } = await supabase.from('utilisateurs').select('count');
+        
+        if (error && error.code === '42P01') {
+            console.log('📋 Les tables n\'existent pas encore. Veuillez les créer via le dashboard Supabase.');
+            console.log('\n📝 INSTRUCTIONS:');
+            console.log('1. Allez sur https://supabase.com/dashboard');
+            console.log('2. Ouvrez votre projet');
+            console.log('3. Allez dans "SQL Editor"');
+            console.log('4. Exécutez le script SQL fourni dans SUPABASE_SETUP.md');
+            return false;
+        }
+        
+        console.log('✅ Connexion à Supabase réussie !');
+        return true;
+    } catch (error) {
+        console.error('❌ Erreur de connexion à Supabase:', error.message);
+        return false;
     }
-  });
+}
 
-  // Table membres
-  db.run(`CREATE TABLE IF NOT EXISTS membres (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom TEXT NOT NULL,
-    prenom TEXT NOT NULL,
-    phone TEXT,
-    email TEXT,
-    adresse TEXT,
-    statut_matrimonial TEXT,
-    nombre_enfants INTEGER,
-    nationalite TEXT,
-    langue_parlee TEXT,
-    niveau_etude TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`, (err) => {
-    if (err) {
-      console.error('Erreur lors de la création de la table membres:', err);
-    } else {
-      console.log('✅ Table membres créée ou déjà existante');
-    }
-  });
-
-  // Insérer les comptes administrateurs par défaut
-  const comptes = [
-    { email: 'admin@eglise.com', password: 'admin123', nom: 'Administrateur' },
-    { email: 'pasteur@eglise.com', password: 'pasteur123', nom: 'Pasteur' }
-  ];
-
-  comptes.forEach((compte) => {
-    db.get('SELECT * FROM utilisateurs WHERE email = ?', [compte.email], (err, row) => {
-      if (err) {
-        console.error('Erreur lors de la vérification des utilisateurs:', err);
-      } else if (!row) {
-        // Hasher le mot de passe
-        bcrypt.hash(compte.password, 10, (err, hash) => {
-          if (err) {
-            console.error('Erreur lors du hashage du mot de passe:', err);
-          } else {
-            db.run(
-              'INSERT INTO utilisateurs (email, mot_de_passe, nom) VALUES (?, ?, ?)',
-              [compte.email, hash, compte.nom],
-              (err) => {
-                if (err) {
-                  console.error('Erreur lors de l\'insertion de l\'utilisateur:', err);
-                } else {
-                  console.log(`✅ Compte créé: ${compte.email}`);
-                }
-              }
-            );
-          }
-        });
-      }
-    });
-  });
-});
-
-module.exports = db;
+module.exports = { supabase, initDatabase };

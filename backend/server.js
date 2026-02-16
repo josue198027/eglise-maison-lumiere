@@ -5,11 +5,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
-const db = require('./database');
+const { supabase, initDatabase } = require('./database');
+require('dotenv').config();
 
 const app = express();
-const PORT = 3000;
-const SECRET_KEY = 'votre_cle_secrete_eglise_2026';
+const PORT = process.env.PORT || 3000;
+const SECRET_KEY = process.env.JWT_SECRET || 'votre_cle_secrete_eglise_2026';
 
 // Rate limiting configuration
 const limiter = rateLimit({
@@ -51,46 +52,51 @@ const verifierToken = (req, res, next) => {
 };
 
 // Route de connexion
-app.post('/api/login', loginLimiter, (req, res) => {
+app.post('/api/login', loginLimiter, async (req, res) => {
   const { email, mot_de_passe } = req.body;
 
   if (!email || !mot_de_passe) {
     return res.status(400).json({ message: 'Email et mot de passe requis' });
   }
 
-  db.get('SELECT * FROM utilisateurs WHERE email = ?', [email], (err, user) => {
-    if (err) {
-      return res.status(500).json({ message: 'Erreur serveur' });
-    }
+  try {
+    const { data: utilisateur, error } = await supabase
+      .from('utilisateurs')
+      .select('*')
+      .eq('email', email)
+      .single();
 
-    if (!user) {
+    if (error || !utilisateur) {
       return res.status(401).json({ message: 'Identifiants incorrects' });
     }
 
-    bcrypt.compare(mot_de_passe, user.mot_de_passe, (err, result) => {
-      if (err || !result) {
-        return res.status(401).json({ message: 'Identifiants incorrects' });
-      }
+    const motDePasseValide = await bcrypt.compare(mot_de_passe, utilisateur.mot_de_passe);
 
-      const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, {
-        expiresIn: '24h'
-      });
+    if (!motDePasseValide) {
+      return res.status(401).json({ message: 'Identifiants incorrects' });
+    }
 
-      res.json({
-        message: 'Connexion réussie',
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          nom: user.nom
-        }
-      });
+    const token = jwt.sign({ id: utilisateur.id, email: utilisateur.email }, SECRET_KEY, {
+      expiresIn: '24h'
     });
-  });
+
+    res.json({
+      message: 'Connexion réussie',
+      token,
+      user: {
+        id: utilisateur.id,
+        email: utilisateur.email,
+        nom: utilisateur.nom
+      }
+    });
+  } catch (error) {
+    console.error('Erreur lors de la connexion:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
 });
 
 // Créer un nouveau membre
-app.post('/api/membres', verifierToken, (req, res) => {
+app.post('/api/membres', verifierToken, async (req, res) => {
   const {
     nom,
     prenom,
@@ -108,57 +114,79 @@ app.post('/api/membres', verifierToken, (req, res) => {
     return res.status(400).json({ message: 'Nom et prénom sont requis' });
   }
 
-  const query = `INSERT INTO membres (
-    nom, prenom, phone, email, adresse, statut_matrimonial, 
-    nombre_enfants, nationalite, langue_parlee, niveau_etude
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  try {
+    const { data, error } = await supabase
+      .from('membres')
+      .insert([{
+        nom,
+        prenom,
+        phone,
+        email,
+        adresse,
+        statut_matrimonial,
+        nombre_enfants,
+        nationalite,
+        langue_parlee,
+        niveau_etude
+      }])
+      .select()
+      .single();
 
-  db.run(
-    query,
-    [nom, prenom, phone, email, adresse, statut_matrimonial, nombre_enfants, nationalite, langue_parlee, niveau_etude],
-    function (err) {
-      if (err) {
-        return res.status(500).json({ message: 'Erreur lors de l\'ajout du membre' });
-      }
+    if (error) throw error;
 
-      res.status(201).json({
-        message: 'Membre ajouté avec succès',
-        id: this.lastID
-      });
-    }
-  );
+    res.status(201).json({
+      message: 'Membre ajouté avec succès',
+      membre: data
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout du membre:', error);
+    res.status(500).json({ message: 'Erreur lors de l\'ajout du membre' });
+  }
 });
 
 // Récupérer tous les membres
-app.get('/api/membres', verifierToken, (req, res) => {
-  db.all('SELECT * FROM membres ORDER BY created_at DESC', [], (err, membres) => {
-    if (err) {
-      return res.status(500).json({ message: 'Erreur lors de la récupération des membres' });
-    }
+app.get('/api/membres', verifierToken, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('membres')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    res.json(membres);
-  });
+    if (error) throw error;
+
+    res.json(data || []);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des membres:', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des membres' });
+  }
 });
 
 // Récupérer un membre spécifique
-app.get('/api/membres/:id', verifierToken, (req, res) => {
+app.get('/api/membres/:id', verifierToken, async (req, res) => {
   const { id } = req.params;
 
-  db.get('SELECT * FROM membres WHERE id = ?', [id], (err, membre) => {
-    if (err) {
-      return res.status(500).json({ message: 'Erreur lors de la récupération du membre' });
-    }
+  try {
+    const { data, error } = await supabase
+      .from('membres')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    if (!membre) {
+    if (error) throw error;
+
+    if (!data) {
       return res.status(404).json({ message: 'Membre non trouvé' });
     }
 
-    res.json(membre);
-  });
+    res.json(data);
+  } catch (error) {
+    console.error('Erreur lors de la récupération du membre:', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération du membre' });
+  }
 });
 
 // Modifier un membre
-app.put('/api/membres/:id', verifierToken, (req, res) => {
+app.put('/api/membres/:id', verifierToken, async (req, res) => {
   const { id } = req.params;
   const {
     nom,
@@ -177,80 +205,105 @@ app.put('/api/membres/:id', verifierToken, (req, res) => {
     return res.status(400).json({ message: 'Nom et prénom sont requis' });
   }
 
-  const query = `UPDATE membres SET 
-    nom = ?, prenom = ?, phone = ?, email = ?, adresse = ?, 
-    statut_matrimonial = ?, nombre_enfants = ?, nationalite = ?, 
-    langue_parlee = ?, niveau_etude = ?, updated_at = CURRENT_TIMESTAMP 
-    WHERE id = ?`;
+  try {
+    const { data, error } = await supabase
+      .from('membres')
+      .update({
+        nom,
+        prenom,
+        phone,
+        email,
+        adresse,
+        statut_matrimonial,
+        nombre_enfants,
+        nationalite,
+        langue_parlee,
+        niveau_etude,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
 
-  db.run(
-    query,
-    [nom, prenom, phone, email, adresse, statut_matrimonial, nombre_enfants, nationalite, langue_parlee, niveau_etude, id],
-    function (err) {
-      if (err) {
-        return res.status(500).json({ message: 'Erreur lors de la modification du membre' });
-      }
+    if (error) throw error;
 
-      if (this.changes === 0) {
-        return res.status(404).json({ message: 'Membre non trouvé' });
-      }
-
-      res.json({ message: 'Membre modifié avec succès' });
-    }
-  );
+    res.json({ message: 'Membre modifié avec succès', membre: data });
+  } catch (error) {
+    console.error('Erreur lors de la modification du membre:', error);
+    res.status(500).json({ message: 'Erreur lors de la modification du membre' });
+  }
 });
 
 // Supprimer un membre
-app.delete('/api/membres/:id', verifierToken, (req, res) => {
+app.delete('/api/membres/:id', verifierToken, async (req, res) => {
   const { id } = req.params;
 
-  db.run('DELETE FROM membres WHERE id = ?', [id], function (err) {
-    if (err) {
-      return res.status(500).json({ message: 'Erreur lors de la suppression du membre' });
-    }
+  try {
+    const { data, error } = await supabase
+      .from('membres')
+      .delete()
+      .eq('id', id)
+      .select();
 
-    if (this.changes === 0) {
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
       return res.status(404).json({ message: 'Membre non trouvé' });
     }
 
     res.json({ message: 'Membre supprimé avec succès' });
-  });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du membre:', error);
+    res.status(500).json({ message: 'Erreur lors de la suppression du membre' });
+  }
 });
 
 // Rechercher des membres
-app.get('/api/membres/rechercher/query', verifierToken, (req, res) => {
+app.get('/api/membres/rechercher/query', verifierToken, async (req, res) => {
   const { q } = req.query;
 
   if (!q) {
     return res.status(400).json({ message: 'Paramètre de recherche manquant' });
   }
 
-  const query = `SELECT * FROM membres WHERE 
-    nom LIKE ? OR prenom LIKE ? OR email LIKE ? OR phone LIKE ?
-    ORDER BY created_at DESC`;
+  // Validate and sanitize search input to prevent injection
+  const searchTerm = String(q).trim();
+  if (searchTerm.length === 0 || searchTerm.length > 100) {
+    return res.status(400).json({ message: 'Paramètre de recherche invalide' });
+  }
 
-  const searchTerm = `%${q}%`;
+  try {
+    const { data, error } = await supabase
+      .from('membres')
+      .select('*')
+      .or(`nom.ilike.%${searchTerm}%,prenom.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
+      .order('created_at', { ascending: false });
 
-  db.all(query, [searchTerm, searchTerm, searchTerm, searchTerm], (err, membres) => {
-    if (err) {
-      return res.status(500).json({ message: 'Erreur lors de la recherche' });
-    }
+    if (error) throw error;
 
-    res.json(membres);
-  });
+    res.json(data || []);
+  } catch (error) {
+    console.error('Erreur lors de la recherche:', error);
+    res.status(500).json({ message: 'Erreur lors de la recherche' });
+  }
 });
 
 // Statistiques
-app.get('/api/statistiques', verifierToken, (req, res) => {
-  db.get('SELECT COUNT(*) as total FROM membres', [], (err, result) => {
-    if (err) {
-      return res.status(500).json({ message: 'Erreur lors de la récupération des statistiques' });
-    }
+app.get('/api/statistiques', verifierToken, async (req, res) => {
+  try {
+    const { count, error } = await supabase
+      .from('membres')
+      .select('*', { count: 'exact', head: true });
+
+    if (error) throw error;
 
     res.json({
-      total_membres: result.total
+      total_membres: count || 0
     });
-  });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des statistiques:', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des statistiques' });
+  }
 });
 
 // Route par défaut pour rediriger vers login
@@ -259,7 +312,14 @@ app.get('/', (req, res) => {
 });
 
 // Démarrer le serveur
-app.listen(PORT, () => {
-  console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
-  console.log(`📂 Frontend accessible sur http://localhost:${PORT}/login.html`);
+initDatabase().then((success) => {
+  if (success) {
+    app.listen(PORT, () => {
+      console.log(`✅ Serveur démarré sur le port ${PORT}`);
+      console.log(`🌐 API disponible sur http://localhost:${PORT}`);
+    });
+  } else {
+    console.log('⚠️  Serveur démarré mais la base de données nécessite une configuration');
+    app.listen(PORT);
+  }
 });
