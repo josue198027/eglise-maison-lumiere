@@ -77,8 +77,10 @@ async function initAdminAccounts() {
         console.log('\n📋 Comptes disponibles:');
         console.log('   - Email: admin@eglise.com   | Mot de passe: admin123');
         console.log('   - Email: pasteur@eglise.com | Mot de passe: pasteur123');
+        
+        const appUrl = process.env.APP_URL || 'https://eglise-maison-lumiere.onrender.com';
         console.log('\n🌐 Vous pouvez maintenant vous connecter sur:');
-        console.log('   https://eglise-maison-lumiere.onrender.com/login.html\n');
+        console.log(`   ${appUrl}/login.html\n`);
 
     } catch (error) {
         console.error('❌ Erreur lors de l\'initialisation:', error.message);

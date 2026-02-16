@@ -96,7 +96,7 @@ app.post('/api/login', loginLimiter, async (req, res) => {
 });
 
 // Endpoint d'initialisation des comptes admin (À SUPPRIMER APRÈS UTILISATION)
-app.post('/api/init-admin', async (req, res) => {
+app.get('/api/init-admin', async (req, res) => {
     try {
         // Générer les hashes
         const adminPassword = await bcrypt.hash('admin123', 10);
@@ -135,10 +135,8 @@ app.post('/api/init-admin', async (req, res) => {
 
         res.json({
             message: 'Comptes administrateurs créés avec succès',
-            comptes: [
-                { email: 'admin@eglise.com', password: 'admin123' },
-                { email: 'pasteur@eglise.com', password: 'pasteur123' }
-            ]
+            instructions: 'Vous pouvez maintenant vous connecter avec admin@eglise.com ou pasteur@eglise.com',
+            note: 'Pour des raisons de sécurité, supprimez cet endpoint après utilisation'
         });
     } catch (error) {
         console.error('Erreur lors de l\'initialisation des admins:', error);
