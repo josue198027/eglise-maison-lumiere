@@ -28,6 +28,21 @@ Application web complète pour la gestion des membres de l'Église de Dieu Maiso
 - **Supprimer** un membre avec confirmation
 - **Statistiques** : nombre total de membres
 
+## 🔐 Initialisation des comptes administrateurs
+
+Après avoir configuré Supabase, vous devez initialiser les comptes administrateurs.
+
+### Méthode simple :
+
+Allez sur : `https://eglise-maison-lumiere.onrender.com/api/init-admin`
+
+Consultez [INIT_ADMIN.md](INIT_ADMIN.md) pour plus de détails.
+
+### Comptes par défaut :
+
+- **Admin** : admin@eglise.com / admin123
+- **Pasteur** : pasteur@eglise.com / pasteur123
+
 ### Informations des membres
 - Nom et prénom (requis)
 - Téléphone et email
