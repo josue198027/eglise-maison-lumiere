@@ -95,6 +95,55 @@ app.post('/api/login', loginLimiter, async (req, res) => {
   }
 });
 
+// Endpoint d'initialisation des comptes admin (À SUPPRIMER APRÈS UTILISATION)
+app.get('/api/init-admin', async (req, res) => {
+    try {
+        // Générer les hashes
+        const adminPassword = await bcrypt.hash('admin123', 10);
+        const pasteurPassword = await bcrypt.hash('pasteur123', 10);
+
+        // Supprimer les anciens comptes
+        await supabase
+            .from('utilisateurs')
+            .delete()
+            .in('email', ['admin@eglise.com', 'pasteur@eglise.com']);
+
+        // Créer les nouveaux comptes
+        const { data: admin, error: adminError } = await supabase
+            .from('utilisateurs')
+            .insert([{
+                email: 'admin@eglise.com',
+                mot_de_passe: adminPassword,
+                nom: 'Administrateur'
+            }])
+            .select()
+            .single();
+
+        const { data: pasteur, error: pasteurError } = await supabase
+            .from('utilisateurs')
+            .insert([{
+                email: 'pasteur@eglise.com',
+                mot_de_passe: pasteurPassword,
+                nom: 'Pasteur'
+            }])
+            .select()
+            .single();
+
+        if (adminError || pasteurError) {
+            throw new Error('Erreur lors de la création des comptes');
+        }
+
+        res.json({
+            message: 'Comptes administrateurs créés avec succès',
+            instructions: 'Vous pouvez maintenant vous connecter avec admin@eglise.com ou pasteur@eglise.com',
+            note: 'Pour des raisons de sécurité, supprimez cet endpoint après utilisation'
+        });
+    } catch (error) {
+        console.error('Erreur lors de l\'initialisation des admins:', error);
+        res.status(500).json({ message: 'Erreur lors de l\'initialisation des comptes admin' });
+    }
+});
+
 // Créer un nouveau membre
 app.post('/api/membres', verifierToken, async (req, res) => {
   const {
