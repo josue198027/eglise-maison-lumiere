@@ -47,13 +47,13 @@ CREATE TABLE membres (
 );
 
 -- Insérer les comptes administrateurs par défaut
--- Note: Les mots de passe doivent être hashés avec bcrypt
--- admin123 hashé: $2a$10$8ZqVZ0Q7XYJxKx5p5Y0Ete7L5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Zu
--- pasteur123 hashé: $2a$10$9XqWA1R8YZKyLy6q6Z1Fuf8M6A6A6A6A6A6A6A6A6A6A6A6A6A6Av
+-- Note: Les mots de passe sont hashés avec bcrypt
+-- admin123 hashé: $2a$10$eIphYrp4F7NBlJaepqpajup99S7lej9P9/1AOlauQqdAvPSHU9q0i
+-- pasteur123 hashé: $2a$10$4ehaDA0GKBBcsyYfOq.gs..oO3jbYfJCx/705FEvWQ9ooxZbw/j5C
 
 INSERT INTO utilisateurs (email, mot_de_passe, nom) VALUES
-('admin@eglise.com', '$2a$10$8ZqVZ0Q7XYJxKx5p5Y0Ete7L5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Zu', 'Administrateur'),
-('pasteur@eglise.com', '$2a$10$9XqWA1R8YZKyLy6q6Z1Fuf8M6A6A6A6A6A6A6A6A6A6A6A6A6A6Av', 'Pasteur');
+('admin@eglise.com', '$2a$10$eIphYrp4F7NBlJaepqpajup99S7lej9P9/1AOlauQqdAvPSHU9q0i', 'Administrateur'),
+('pasteur@eglise.com', '$2a$10$4ehaDA0GKBBcsyYfOq.gs..oO3jbYfJCx/705FEvWQ9ooxZbw/j5C', 'Pasteur');
 
 -- Créer des index pour améliorer les performances
 CREATE INDEX idx_membres_nom ON membres(nom);

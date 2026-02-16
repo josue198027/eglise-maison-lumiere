@@ -239,12 +239,17 @@ app.delete('/api/membres/:id', verifierToken, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('membres')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .select();
 
     if (error) throw error;
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ message: 'Membre non trouvé' });
+    }
 
     res.json({ message: 'Membre supprimé avec succès' });
   } catch (error) {
@@ -261,11 +266,17 @@ app.get('/api/membres/rechercher/query', verifierToken, async (req, res) => {
     return res.status(400).json({ message: 'Paramètre de recherche manquant' });
   }
 
+  // Validate and sanitize search input to prevent injection
+  const searchTerm = String(q).trim();
+  if (searchTerm.length === 0 || searchTerm.length > 100) {
+    return res.status(400).json({ message: 'Paramètre de recherche invalide' });
+  }
+
   try {
     const { data, error } = await supabase
       .from('membres')
       .select('*')
-      .or(`nom.ilike.%${q}%,prenom.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%`)
+      .or(`nom.ilike.%${searchTerm}%,prenom.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
