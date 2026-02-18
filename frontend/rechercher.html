@@ -10,36 +10,66 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-brand">Église de Dieu - Maison de Lumière</div>
-        <div class="nav-user">
-            <span id="user-role">Administrateur</span>
-            <button onclick="window.location.href='dashboard.html'" class="btn-retour">Retour</button>
-            <button onclick="deconnexion()" class="btn-deconnexion">Déconnexion</button>
+    <nav class="navbar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; width: 100%;">
+            <!-- Logo et titre à gauche -->
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 32px;">⛪</div>
+                <div>
+                    <div style="font-size: 28px; font-weight: bold; color: white; letter-spacing: 0.5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+                        Église de Dieu - Maison de Lumière
+                    </div>
+                    <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-top: 2px;">
+                        Système de Gestion des Membres
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Boutons utilisateur à droite -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 20px; color: white; font-size: 14px; font-weight: 500;">
+                    👤 <span id="user-role">Administrateur</span>
+                </div>
+                <button onclick="window.location.href='dashboard.html'" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                    ← Retour
+                </button>
+                <button onclick="deconnexion()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; box-shadow: 0 2px 8px rgba(245,87,108,0.3); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(245,87,108,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(245,87,108,0.3)'">
+                    🚪 Déconnexion
+                </button>
+            </div>
         </div>
     </nav>
 
     <div class="container">
-        <h1>Rechercher des membres</h1>
+        <h1 style="font-size: 36px; font-weight: bold; color: #1e293b; margin-bottom: 30px; text-align: center; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
+            🔍 Rechercher des membres
+        </h1>
 
-        <div class="search-container">
+        <div class="search-container" style="margin-bottom: 30px;">
             <input 
                 type="text" 
                 id="recherche" 
                 placeholder="Rechercher par nom, prénom, email ou téléphone..."
                 onkeyup="rechercherMembres()"
+                style="flex: 1; padding: 14px 20px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px;"
             >
-            <button onclick="rechercherMembres()" class="btn-primary">Rechercher</button>
-            <button onclick="voirTous()" class="btn-secondary">Voir tous</button>
+            <button onclick="rechercherMembres()" class="btn-primary" style="padding: 14px 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(102,126,234,0.4); transition: all 0.3s;">
+                🔍 Rechercher
+            </button>
+            <button onclick="voirTous()" class="btn-secondary" style="padding: 14px 28px; background: linear-gradient(135deg, #48c6ef 0%, #6f86d6 100%); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(72,198,239,0.4); transition: all 0.3s;">
+                👥 Voir tous
+            </button>
         </div>
 
         <!-- Boutons d'export -->
-        <div style="display: flex; gap: 10px; margin: 20px 0; justify-content: flex-end;">
-            <button onclick="exporterExcel()" class="btn-success">
-                📥 Exporter en Excel
+        <div style="display: flex; gap: 12px; margin: 25px 0; justify-content: flex-end; flex-wrap: wrap;">
+            <button onclick="exporterExcel()" style="display: flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 15px; box-shadow: 0 4px 12px rgba(17,153,142,0.4); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(17,153,142,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(17,153,142,0.4)'">
+                <span style="font-size: 20px;">📊</span>
+                Exporter en Excel
             </button>
-            <button onclick="exporterPDF()" class="btn-danger">
-                📄 Exporter en PDF
+            <button onclick="exporterPDF()" style="display: flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 15px; box-shadow: 0 4px 12px rgba(238,9,121,0.4); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(238,9,121,0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(238,9,121,0.4)'">
+                <span style="font-size: 20px;">📄</span>
+                Exporter en PDF
             </button>
         </div>
 
@@ -84,6 +114,9 @@
                     url = `${API_URL}/api/membres/rechercher?q=${encodeURIComponent(recherche)}`;
                 }
 
+                console.log('Recherche:', recherche); // Debug
+                console.log('URL:', url); // Debug
+
                 const response = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -98,10 +131,11 @@
 
                 if (response.ok) {
                     const membres = await response.json();
+                    console.log('Membres trouvés:', membres.length); // Debug
                     tousMembres = membres;
                     afficherResultats(membres);
                 } else {
-                    console.error('Erreur:', response.status);
+                    console.error('Erreur HTTP:', response.status);
                     alert('Erreur lors de la recherche');
                 }
             } catch (error) {
