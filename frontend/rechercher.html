@@ -162,9 +162,10 @@
                         const tousMembresData = await fallbackResponse.json();
                         console.log('Fallback réussi - Membres récupérés:', tousMembresData.length);
                         
-                        // Filtrer localement
+                        // Filtrer localement si nécessaire
+                        let membresAfficher = tousMembresData;
                         if (recherche) {
-                            const membresFiltres = tousMembresData.filter(m => {
+                            membresAfficher = tousMembresData.filter(m => {
                                 const searchLower = recherche.toLowerCase();
                                 return (
                                     (m.nom && m.nom.toLowerCase().includes(searchLower)) ||
@@ -173,13 +174,11 @@
                                     (m.phone && m.phone.toLowerCase().includes(searchLower))
                                 );
                             });
-                            console.log('Membres filtrés localement:', membresFiltres.length);
-                            tousMembres = membresFiltres;
-                            afficherResultats(membresFiltres);
-                        } else {
-                            tousMembres = tousMembresData;
-                            afficherResultats(tousMembresData);
+                            console.log('Membres filtrés localement:', membresAfficher.length);
                         }
+                        
+                        tousMembres = membresAfficher;
+                        afficherResultats(membresAfficher);
                         return;
                     } else {
                         throw new Error(`Erreur fallback: ${fallbackResponse.status}`);
@@ -229,7 +228,7 @@
                 } else if (error.message.includes('timeout')) {
                     alert('⏱️ Le serveur met trop de temps à répondre.\n\nRéessayez dans quelques instants.');
                 } else {
-                    alert(`❌ Erreur lors de la recherche.\n\nDétails techniques :\n${error.message}\n\nConsultez la console (F12) pour plus d'informations.`);
+                    alert('❌ Erreur lors de la recherche.\n\nVeuillez réessayer ou contacter l\'administrateur si le problème persiste.');
                 }
             }
         }
