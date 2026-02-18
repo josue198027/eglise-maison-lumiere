@@ -67,7 +67,7 @@
         let url = `${API_URL}/api/membres`;
         
         if (recherche) {
-          url = `${API_URL}/api/membres/rechercher?q=${encodeURIComponent(recherche)}`;
+          url = `${API_URL}/api/membres/rechercher/query?q=${encodeURIComponent(recherche)}`;
         }
         
         const response = await fetch(url, {
