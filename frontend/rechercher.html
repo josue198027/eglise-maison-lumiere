@@ -100,60 +100,167 @@
             return true;
         }
 
-        // Fonction pour rechercher les membres
+        // Fonction pour rechercher les membres - VERSION AMÉLIORÉE
         async function rechercherMembres() {
             if (!verifierAuth()) return;
 
-            const recherche = document.getElementById('recherche').value.trim();
+            const champRecherche = document.getElementById('recherche');
+            if (!champRecherche) {
+                console.error('Champ de recherche introuvable');
+                return;
+            }
+
+            const recherche = champRecherche.value.trim();
             const token = localStorage.getItem('token');
+
+            console.log('=== DÉBUT RECHERCHE ===');
+            console.log('Terme de recherche:', recherche);
+            console.log('Token présent:', !!token);
 
             try {
                 let url = `${API_URL}/api/membres`;
                 
+                // Si recherche non vide, utiliser l'endpoint de recherche
                 if (recherche) {
                     url = `${API_URL}/api/membres/rechercher?q=${encodeURIComponent(recherche)}`;
                 }
 
-                console.log('Recherche:', recherche); // Debug
-                console.log('URL:', url); // Debug
+                console.log('URL de la requête:', url);
 
                 const response = await fetch(url, {
+                    method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 });
 
+                console.log('Status HTTP:', response.status);
+                console.log('Status Text:', response.statusText);
+
+                // Gestion des différents codes d'erreur
                 if (response.status === 401) {
-                    alert('Session expirée. Veuillez vous reconnecter.');
+                    console.error('Session expirée (401)');
+                    alert('⏱️ Session expirée. Veuillez vous reconnecter.');
+                    localStorage.removeItem('token');
                     window.location.href = 'login.html';
                     return;
                 }
 
-                if (response.ok) {
-                    const membres = await response.json();
-                    console.log('Membres trouvés:', membres.length); // Debug
-                    tousMembres = membres;
-                    afficherResultats(membres);
-                } else {
-                    console.error('Erreur HTTP:', response.status);
-                    alert('Erreur lors de la recherche');
+                if (response.status === 404) {
+                    console.warn('Endpoint non trouvé (404) - Tentative avec /api/membres');
+                    // Si l'endpoint de recherche n'existe pas, récupérer tous les membres
+                    const fallbackResponse = await fetch(`${API_URL}/api/membres`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (fallbackResponse.ok) {
+                        const tousMembresData = await fallbackResponse.json();
+                        console.log('Fallback réussi - Membres récupérés:', tousMembresData.length);
+                        
+                        // Filtrer localement
+                        if (recherche) {
+                            const membresFiltres = tousMembresData.filter(m => {
+                                const searchLower = recherche.toLowerCase();
+                                return (
+                                    (m.nom && m.nom.toLowerCase().includes(searchLower)) ||
+                                    (m.prenom && m.prenom.toLowerCase().includes(searchLower)) ||
+                                    (m.email && m.email.toLowerCase().includes(searchLower)) ||
+                                    (m.phone && m.phone.toLowerCase().includes(searchLower))
+                                );
+                            });
+                            console.log('Membres filtrés localement:', membresFiltres.length);
+                            tousMembres = membresFiltres;
+                            afficherResultats(membresFiltres);
+                        } else {
+                            tousMembres = tousMembresData;
+                            afficherResultats(tousMembresData);
+                        }
+                        return;
+                    } else {
+                        throw new Error(`Erreur fallback: ${fallbackResponse.status}`);
+                    }
                 }
+
+                if (response.status === 500) {
+                    console.error('Erreur serveur (500)');
+                    alert('❌ Erreur serveur. Veuillez réessayer dans quelques instants.');
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Erreur réponse:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                // Succès - Parser la réponse
+                const contentType = response.headers.get('content-type');
+                console.log('Content-Type:', contentType);
+
+                let membres;
+                if (contentType && contentType.includes('application/json')) {
+                    membres = await response.json();
+                } else {
+                    const text = await response.text();
+                    console.error('Réponse non-JSON:', text);
+                    throw new Error('Réponse serveur invalide (non-JSON)');
+                }
+
+                console.log('✅ Membres trouvés:', membres.length);
+                console.log('Membres:', membres);
+
+                tousMembres = membres;
+                afficherResultats(membres);
+
             } catch (error) {
-                console.error('Erreur:', error);
-                alert('Erreur de connexion au serveur');
+                console.error('=== ERREUR RECHERCHE ===');
+                console.error('Type:', error.name);
+                console.error('Message:', error.message);
+                console.error('Stack:', error.stack);
+
+                // Message d'erreur plus informatif
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    alert('❌ Impossible de se connecter au serveur.\n\nVérifiez votre connexion internet ou réessayez plus tard.');
+                } else if (error.message.includes('timeout')) {
+                    alert('⏱️ Le serveur met trop de temps à répondre.\n\nRéessayez dans quelques instants.');
+                } else {
+                    alert(`❌ Erreur lors de la recherche.\n\nDétails techniques :\n${error.message}\n\nConsultez la console (F12) pour plus d'informations.`);
+                }
             }
         }
 
-        // Fonction pour afficher les résultats
+        // Fonction pour afficher les résultats - AMÉLIORÉE
         function afficherResultats(membres) {
+            console.log('=== AFFICHAGE RÉSULTATS ===');
+            console.log('Nombre de membres à afficher:', membres.length);
+            
             const resultatsDiv = document.getElementById('resultats-recherche');
             const compteur = document.getElementById('nombre-membres');
             
+            if (!resultatsDiv) {
+                console.error('Element "resultats-recherche" introuvable');
+                return;
+            }
+            
             resultatsDiv.innerHTML = '';
-            compteur.textContent = membres.length;
+            
+            if (compteur) {
+                compteur.textContent = membres.length;
+            }
 
             if (membres.length === 0) {
-                resultatsDiv.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px;">Aucun membre trouvé</p>';
+                resultatsDiv.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; color: #64748b;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
+                        <h3 style="font-size: 20px; margin-bottom: 10px; color: #475569;">Aucun membre trouvé</h3>
+                        <p style="font-size: 16px;">Essayez une autre recherche ou cliquez sur "Voir tous"</p>
+                    </div>
+                `;
                 return;
             }
 
@@ -187,11 +294,17 @@
                 
                 resultatsDiv.appendChild(card);
             });
+            
+            console.log('✅ Affichage terminé');
         }
 
         // Fonction pour voir tous les membres
         function voirTous() {
-            document.getElementById('recherche').value = '';
+            console.log('=== VOIR TOUS ===');
+            const champRecherche = document.getElementById('recherche');
+            if (champRecherche) {
+                champRecherche.value = '';
+            }
             rechercherMembres();
         }
 
