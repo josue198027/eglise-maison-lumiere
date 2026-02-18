@@ -14,7 +14,7 @@
         <div class="nav-brand">Église de Dieu - Maison de Lumière</div>
         <div class="nav-user">
             <span id="user-role">Administrateur</span>
-            <button onclick="window.location.href='index.html'" class="btn-retour">Retour</button>
+            <button onclick="window.location.href='dashboard.html'" class="btn-retour">Retour</button>
             <button onclick="deconnexion()" class="btn-deconnexion">Déconnexion</button>
         </div>
     </nav>
@@ -138,7 +138,7 @@
                             ${membre.nombre_enfants !== null && membre.nombre_enfants !== undefined ? `<span><strong>👶 Enfants:</strong> ${membre.nombre_enfants}</span>` : ''}
                             ${membre.nationalite ? `<span><strong>🌍 Nationalité:</strong> ${membre.nationalite}</span>` : ''}
                             ${membre.langue_parlee ? `<span><strong>🗣️ Langue:</strong> ${membre.langue_parlee}</span>` : ''}
-                            ${membre.niveau_etude ? `<span><strong>🎓 Niveau:</strong> ${membre.niveau_etude}</span>` : ''}
+                            ${membre.niveau_etude ? `<span><strong>🎓 Niveau d'étude:</strong> ${membre.niveau_etude}</span>` : ''}
                         </div>
                     </div>
                     <div class="membre-actions">
