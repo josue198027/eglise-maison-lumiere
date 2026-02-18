@@ -48,7 +48,7 @@
   </div>
 
   <script src="js/app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
     // 1. Constantes et variables globales
     const API_URL = 'https://eglise-maison-lumiere.onrender.com';
@@ -142,10 +142,10 @@
             </div>
           </div>
           <div class="membre-actions">
-            <button onclick="window.location.href='/modifier.html?id=${membre.id}'" class="btn-modifier">
+            <button onclick="window.location.href='/modifier.html?id=' + encodeURIComponent('${String(membre.id).replace(/'/g, "\\'")}'))" class="btn-modifier">
               Modifier
             </button>
-            <button onclick="supprimerMembre('${membre.id}')" class="btn-supprimer">
+            <button onclick="supprimerMembre('${String(membre.id).replace(/'/g, "\\'")}'))" class="btn-supprimer">
               Supprimer
             </button>
           </div>
@@ -219,9 +219,19 @@
         membre.niveau_etude || ''
       ]);
 
+      // Fonction pour échapper les valeurs CSV
+      const escapeCsvValue = (value) => {
+        const strValue = String(value);
+        // Si la valeur contient des guillemets, virgules ou retours à la ligne, l'encadrer de guillemets
+        if (strValue.includes('"') || strValue.includes(',') || strValue.includes('\n')) {
+          return `"${strValue.replace(/"/g, '""')}"`;
+        }
+        return `"${strValue}"`;
+      };
+
       // Combiner en-tête et lignes
       const csvContent = [headers, ...rows]
-        .map(row => row.map(cell => `"${cell}"`).join(','))
+        .map(row => row.map(escapeCsvValue).join(','))
         .join('\n');
 
       // Créer et télécharger le fichier
@@ -296,10 +306,15 @@
     }
 
     // 4. Gestionnaires d'événements
-    window.addEventListener('DOMContentLoaded', async () => {
-      // Charger tous les membres au démarrage
-      await rechercherMembres();
-    });
+    // Charger les membres au démarrage
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', async () => {
+        await rechercherMembres();
+      });
+    } else {
+      // DOM déjà chargé
+      rechercherMembres();
+    }
 
     // Recherche en temps réel
     document.getElementById('recherche').addEventListener('input', (e) => {
