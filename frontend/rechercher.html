@@ -1,337 +1,312 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rechercher des membres - Église de Dieu Maison de Lumière</title>
-  <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rechercher des membres - Église de Dieu</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Bibliothèques jsPDF pour export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
-  <!-- Navigation -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <div class="nav-left">
-        <img src="images/logo.png" alt="Logo" class="nav-logo" onerror="this.style.display='none'">
-        <span class="nav-title">Église de Dieu - Maison de Lumière</span>
-      </div>
-      <div class="nav-right">
-        <span class="user-name" id="userName"></span>
-        <button onclick="window.location.href='/dashboard.html'" class="btn btn-secondary">Retour</button>
-        <button onclick="deconnexion()" class="btn btn-secondary">Déconnexion</button>
-      </div>
-    </div>
-  </nav>
+    <nav class="navbar">
+        <div class="nav-brand">Église de Dieu - Maison de Lumière</div>
+        <div class="nav-user">
+            <span id="user-role">Administrateur</span>
+            <button onclick="window.location.href='index.html'" class="btn-retour">Retour</button>
+            <button onclick="deconnexion()" class="btn-deconnexion">Déconnexion</button>
+        </div>
+    </nav>
 
-  <!-- Contenu principal -->
-  <div class="container">
-    <h1 class="page-title">Rechercher et consulter les membres</h1>
+    <div class="container">
+        <h1>Rechercher des membres</h1>
 
-    <!-- Barre de recherche -->
-    <div class="search-container">
-      <input type="text" id="recherche" placeholder="Rechercher par nom, prénom, email ou téléphone..." class="search-input">
-      <button onclick="rechercherMembres()" class="btn btn-primary">Rechercher</button>
-      <button onclick="voirTous()" class="btn btn-secondary">Voir tous</button>
-      <button onclick="exporterCSV()" class="btn btn-success">📊 Exporter en Excel</button>
-      <button onclick="exporterPDF()" class="btn btn-info">📄 Exporter en PDF</button>
-    </div>
+        <div class="search-container">
+            <input 
+                type="text" 
+                id="recherche" 
+                placeholder="Rechercher par nom, prénom, email ou téléphone..."
+                onkeyup="rechercherMembres()"
+            >
+            <button onclick="rechercherMembres()" class="btn-primary">Rechercher</button>
+            <button onclick="voirTous()" class="btn-secondary">Voir tous</button>
+        </div>
 
-    <!-- Compteur de membres -->
-    <div style="text-align: center; margin: 20px 0; font-size: 18px; font-weight: 600; color: #6366f1;">
-      <span id="nombre-membres">0</span> membre(s) trouvé(s)
-    </div>
-
-    <!-- Message -->
-    <div id="message" class="message" style="display: none;"></div>
-
-    <!-- Résultats -->
-    <div id="resultats-recherche" class="membres-grid"></div>
-  </div>
-
-  <script src="js/app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script>
-    // 1. Constantes et variables globales
-    const API_URL = 'https://eglise-maison-lumiere.onrender.com';
-    let tousMembres = [];
-
-    // Vérifier l'authentification
-    verifierAuth();
-    afficherNomUtilisateur();
-
-    // 2. Fonctions principales
-    async function rechercherMembres() {
-      const recherche = document.getElementById('recherche').value.trim();
-      
-      try {
-        const token = localStorage.getItem('token');
-        let url = `${API_URL}/api/membres`;
-        
-        if (recherche) {
-          url = `${API_URL}/api/membres/rechercher/query?q=${encodeURIComponent(recherche)}`;
-        }
-        
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const membres = await response.json();
-          afficherResultats(membres);
-        } else if (response.status === 401) {
-          alert('Session expirée. Veuillez vous reconnecter.');
-          window.location.href = '/login.html';
-        } else {
-          alert('Erreur lors de la recherche');
-        }
-      } catch (error) {
-        console.error('Erreur:', error);
-        alert('Erreur lors de la recherche');
-      }
-    }
-
-    function afficherResultats(membres) {
-      // Stocker pour l'export
-      tousMembres = membres;
-      
-      const resultatsDiv = document.getElementById('resultats-recherche');
-      resultatsDiv.innerHTML = '';
-
-      if (membres.length === 0) {
-        resultatsDiv.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px;">Aucun membre trouvé</p>';
-        // Mettre à jour le compteur
-        const compteurElement = document.getElementById('nombre-membres');
-        if (compteurElement) {
-          compteurElement.textContent = 0;
-        }
-        return;
-      }
-
-      membres.forEach(membre => {
-        const membreCard = document.createElement('div');
-        membreCard.className = 'membre-card';
-        
-        // Construire les détails
-        let detailsHTML = `
-          <div class="membre-info">
-            <div class="membre-nom">${membre.nom || ''} ${membre.prenom || ''}</div>
-            <div class="membre-details">
-              <span><strong>📞 Téléphone:</strong> ${membre.phone || 'N/A'}</span>
-              <span><strong>📍 Adresse:</strong> ${membre.adresse || 'N/A'}</span>
-        `;
-        
-        // Ajouter les détails supplémentaires s'ils existent
-        if (membre.statut_matrimonial) {
-          detailsHTML += `<span><strong>👥 Statut:</strong> ${membre.statut_matrimonial}</span>`;
-        }
-        if (membre.nombre_enfants !== null && membre.nombre_enfants !== undefined) {
-          detailsHTML += `<span><strong>👶 Enfants:</strong> ${membre.nombre_enfants}</span>`;
-        }
-        if (membre.nationalite) {
-          detailsHTML += `<span><strong>🌍 Nationalité:</strong> ${membre.nationalite}</span>`;
-        }
-        if (membre.langue_parlee) {
-          detailsHTML += `<span><strong>🗣️ Langue:</strong> ${membre.langue_parlee}</span>`;
-        }
-        if (membre.niveau_etude) {
-          detailsHTML += `<span><strong>🎓 Niveau d'étude:</strong> ${membre.niveau_etude}</span>`;
-        }
-        
-        detailsHTML += `
-            </div>
-          </div>
-          <div class="membre-actions">
-            <button onclick="window.location.href='/modifier.html?id=' + encodeURIComponent('${String(membre.id).replace(/'/g, "\\'")}'))" class="btn-modifier">
-              Modifier
+        <!-- Boutons d'export -->
+        <div style="display: flex; gap: 10px; margin: 20px 0; justify-content: flex-end;">
+            <button onclick="exporterExcel()" class="btn-success">
+                📥 Exporter en Excel
             </button>
-            <button onclick="supprimerMembre('${String(membre.id).replace(/'/g, "\\'")}'))" class="btn-supprimer">
-              Supprimer
+            <button onclick="exporterPDF()" class="btn-danger">
+                📄 Exporter en PDF
             </button>
-          </div>
-        `;
-        
-        membreCard.innerHTML = detailsHTML;
-        resultatsDiv.appendChild(membreCard);
-      });
-      
-      // Mettre à jour le compteur
-      const compteurElement = document.getElementById('nombre-membres');
-      if (compteurElement) {
-        compteurElement.textContent = membres.length;
-      }
-    }
+        </div>
 
-    async function supprimerMembre(id) {
-      if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
-        return;
-      }
+        <div id="compteur-membres" style="text-align: right; color: #64748b; margin-bottom: 10px;">
+            <span id="nombre-membres">0</span> membre(s)
+        </div>
 
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/api/membres/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+        <div id="resultats-recherche" class="membres-grid"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://eglise-maison-lumiere.onrender.com';
+        let tousMembres = [];
+
+        // Fonction de déconnexion
+        function deconnexion() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        // Vérifier l'authentification
+        function verifierAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            return true;
+        }
+
+        // Fonction pour rechercher les membres
+        async function rechercherMembres() {
+            if (!verifierAuth()) return;
+
+            const recherche = document.getElementById('recherche').value.trim();
+            const token = localStorage.getItem('token');
+
+            try {
+                let url = `${API_URL}/api/membres`;
+                
+                if (recherche) {
+                    url = `${API_URL}/api/membres/rechercher?q=${encodeURIComponent(recherche)}`;
+                }
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    alert('Session expirée. Veuillez vous reconnecter.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                if (response.ok) {
+                    const membres = await response.json();
+                    tousMembres = membres;
+                    afficherResultats(membres);
+                } else {
+                    console.error('Erreur:', response.status);
+                    alert('Erreur lors de la recherche');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur de connexion au serveur');
+            }
+        }
+
+        // Fonction pour afficher les résultats
+        function afficherResultats(membres) {
+            const resultatsDiv = document.getElementById('resultats-recherche');
+            const compteur = document.getElementById('nombre-membres');
+            
+            resultatsDiv.innerHTML = '';
+            compteur.textContent = membres.length;
+
+            if (membres.length === 0) {
+                resultatsDiv.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px;">Aucun membre trouvé</p>';
+                return;
+            }
+
+            membres.forEach(membre => {
+                const card = document.createElement('div');
+                card.className = 'membre-card';
+                
+                card.innerHTML = `
+                    <div class="membre-info">
+                        <div class="membre-nom">${membre.nom || ''} ${membre.prenom || ''}</div>
+                        <div class="membre-details">
+                            <span><strong>📞 Téléphone:</strong> ${membre.phone || 'N/A'}</span>
+                            <span><strong>📧 Email:</strong> ${membre.email || 'N/A'}</span>
+                            <span><strong>📍 Adresse:</strong> ${membre.adresse || 'N/A'}</span>
+                            ${membre.statut_matrimonial ? `<span><strong>👥 Statut:</strong> ${membre.statut_matrimonial}</span>` : ''}
+                            ${membre.nombre_enfants !== null && membre.nombre_enfants !== undefined ? `<span><strong>👶 Enfants:</strong> ${membre.nombre_enfants}</span>` : ''}
+                            ${membre.nationalite ? `<span><strong>🌍 Nationalité:</strong> ${membre.nationalite}</span>` : ''}
+                            ${membre.langue_parlee ? `<span><strong>🗣️ Langue:</strong> ${membre.langue_parlee}</span>` : ''}
+                            ${membre.niveau_etude ? `<span><strong>🎓 Niveau:</strong> ${membre.niveau_etude}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="membre-actions">
+                        <button onclick="modifierMembre('${membre.id}')" class="btn-modifier">
+                            Modifier
+                        </button>
+                        <button onclick="supprimerMembre('${membre.id}')" class="btn-supprimer">
+                            Supprimer
+                        </button>
+                    </div>
+                `;
+                
+                resultatsDiv.appendChild(card);
+            });
+        }
+
+        // Fonction pour voir tous les membres
+        function voirTous() {
+            document.getElementById('recherche').value = '';
+            rechercherMembres();
+        }
+
+        // Fonction pour modifier un membre
+        function modifierMembre(id) {
+            window.location.href = `modifier.html?id=${id}`;
+        }
+
+        // Fonction pour supprimer un membre
+        async function supprimerMembre(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce membre ?')) {
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`${API_URL}/api/membres/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert('✅ Membre supprimé avec succès');
+                    rechercherMembres();
+                } else {
+                    const error = await response.json();
+                    alert(`❌ Erreur: ${error.message || 'Impossible de supprimer le membre'}`);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur lors de la suppression du membre');
+            }
+        }
+
+        // Fonction pour exporter en Excel (CSV)
+        function exporterExcel() {
+            if (tousMembres.length === 0) {
+                alert('Aucun membre à exporter');
+                return;
+            }
+
+            const headers = ['Nom', 'Prénom', 'Téléphone', 'Email', 'Adresse', 'Statut', 'Enfants', 'Nationalité', 'Langue', 'Niveau'];
+            
+            const rows = tousMembres.map(m => [
+                m.nom || '',
+                m.prenom || '',
+                m.phone || '',
+                m.email || '',
+                m.adresse || '',
+                m.statut_matrimonial || '',
+                m.nombre_enfants || '',
+                m.nationalite || '',
+                m.langue_parlee || '',
+                m.niveau_etude || ''
+            ]);
+
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+            ].join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            const date = new Date().toISOString().split('T')[0];
+            
+            link.href = url;
+            link.download = `membres-eglise-${date}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            alert(`✅ ${tousMembres.length} membre(s) exporté(s) en Excel`);
+        }
+
+        // Fonction pour exporter en PDF
+        function exporterPDF() {
+            if (tousMembres.length === 0) {
+                alert('Aucun membre à exporter');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+
+            // En-tête
+            doc.setFillColor(99, 102, 241);
+            doc.rect(0, 0, 297, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
+            doc.text('Église de Dieu - Maison de Lumière', 148.5, 15, { align: 'center' });
+            doc.setFontSize(14);
+            doc.text('Liste des Membres', 148.5, 25, { align: 'center' });
+            doc.setFontSize(10);
+            const dateStr = new Date().toLocaleDateString('fr-FR');
+            doc.text(`Date: ${dateStr}`, 148.5, 33, { align: 'center' });
+
+            // Tableau
+            const tableData = tousMembres.map(m => [
+                m.nom || '',
+                m.prenom || '',
+                m.phone || '',
+                m.email || '',
+                m.statut_matrimonial || '',
+                m.nationalite || ''
+            ]);
+
+            doc.autoTable({
+                startY: 45,
+                head: [['Nom', 'Prénom', 'Téléphone', 'Email', 'Statut', 'Nationalité']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: {
+                    fillColor: [99, 102, 241],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold'
+                },
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 3
+                },
+                didDrawPage: function(data) {
+                    doc.setFontSize(8);
+                    doc.setTextColor(128);
+                    doc.text(
+                        `Page ${data.pageNumber} | Total: ${tousMembres.length} membre(s)`,
+                        148.5,
+                        doc.internal.pageSize.height - 10,
+                        { align: 'center' }
+                    );
+                }
+            });
+
+            const date = new Date().toISOString().split('T')[0];
+            doc.save(`membres-eglise-${date}.pdf`);
+
+            alert(`✅ ${tousMembres.length} membre(s) exporté(s) en PDF`);
+        }
+
+        // Charger tous les membres au démarrage
+        window.addEventListener('DOMContentLoaded', function() {
+            if (verifierAuth()) {
+                rechercherMembres();
+            }
         });
-
-        if (response.ok) {
-          alert('✅ Membre supprimé avec succès');
-          // Recharger les résultats
-          rechercherMembres();
-        } else {
-          const error = await response.json();
-          alert(`❌ Erreur: ${error.message || 'Impossible de supprimer le membre'}`);
-        }
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
-        alert('❌ Erreur lors de la suppression du membre');
-      }
-    }
-
-    function voirTous() {
-      document.getElementById('recherche').value = '';
-      rechercherMembres();
-    }
-
-    // 3. Fonctions d'export
-    function exporterCSV() {
-      if (tousMembres.length === 0) {
-        alert('Aucun membre à exporter');
-        return;
-      }
-
-      // Créer l'en-tête CSV
-      const headers = ['Nom', 'Prénom', 'Téléphone', 'Email', 'Adresse', 'Statut matrimonial', 'Nombre d\'enfants', 'Nationalité', 'Langue parlée', 'Niveau d\'étude'];
-      
-      // Créer les lignes CSV
-      const rows = tousMembres.map(membre => [
-        membre.nom || '',
-        membre.prenom || '',
-        membre.phone || '',
-        membre.email || '',
-        membre.adresse || '',
-        membre.statut_matrimonial || '',
-        membre.nombre_enfants !== null ? membre.nombre_enfants : '',
-        membre.nationalite || '',
-        membre.langue_parlee || '',
-        membre.niveau_etude || ''
-      ]);
-
-      // Fonction pour échapper les valeurs CSV
-      const escapeCsvValue = (value) => {
-        const strValue = String(value);
-        // Si la valeur contient des guillemets, virgules ou retours à la ligne, l'encadrer de guillemets
-        if (strValue.includes('"') || strValue.includes(',') || strValue.includes('\n')) {
-          return `"${strValue.replace(/"/g, '""')}"`;
-        }
-        return `"${strValue}"`;
-      };
-
-      // Combiner en-tête et lignes
-      const csvContent = [headers, ...rows]
-        .map(row => row.map(escapeCsvValue).join(','))
-        .join('\n');
-
-      // Créer et télécharger le fichier
-      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `membres_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    function exporterPDF() {
-      if (tousMembres.length === 0) {
-        alert('Aucun membre à exporter');
-        return;
-      }
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      // Titre
-      doc.setFontSize(18);
-      doc.text('Liste des membres', 105, 15, { align: 'center' });
-      doc.setFontSize(10);
-      doc.text(`Date: ${new Date().toLocaleDateString()}`, 105, 22, { align: 'center' });
-
-      let yPosition = 35;
-      const lineHeight = 7;
-      const pageHeight = doc.internal.pageSize.height;
-
-      tousMembres.forEach((membre, index) => {
-        // Vérifier si on doit ajouter une nouvelle page
-        if (yPosition > pageHeight - 30) {
-          doc.addPage();
-          yPosition = 20;
-        }
-
-        // Afficher les informations du membre
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text(`${membre.nom || ''} ${membre.prenom || ''}`, 15, yPosition);
-        
-        yPosition += lineHeight;
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'normal');
-        
-        if (membre.phone) {
-          doc.text(`Téléphone: ${membre.phone}`, 20, yPosition);
-          yPosition += lineHeight;
-        }
-        if (membre.email) {
-          doc.text(`Email: ${membre.email}`, 20, yPosition);
-          yPosition += lineHeight;
-        }
-        if (membre.adresse) {
-          doc.text(`Adresse: ${membre.adresse}`, 20, yPosition);
-          yPosition += lineHeight;
-        }
-
-        // Ligne de séparation
-        yPosition += 3;
-        doc.setDrawColor(200, 200, 200);
-        doc.line(15, yPosition, 195, yPosition);
-        yPosition += 5;
-      });
-
-      // Sauvegarder le PDF
-      doc.save(`membres_${new Date().toISOString().split('T')[0]}.pdf`);
-    }
-
-    // 4. Gestionnaires d'événements
-    // Charger les membres au démarrage
-    if (document.readyState === 'loading') {
-      window.addEventListener('DOMContentLoaded', async () => {
-        await rechercherMembres();
-      });
-    } else {
-      // DOM déjà chargé
-      rechercherMembres();
-    }
-
-    // Recherche en temps réel
-    document.getElementById('recherche').addEventListener('input', (e) => {
-      const query = e.target.value.trim();
-      if (query.length > 0) {
-        rechercherMembres();
-      } else {
-        voirTous();
-      }
-    });
-
-    // Rechercher avec la touche Entrée
-    document.getElementById('recherche').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        rechercherMembres();
-      }
-    });
-  </script>
+    </script>
 </body>
 </html>
