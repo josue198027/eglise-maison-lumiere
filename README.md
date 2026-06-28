@@ -1,8 +1,8 @@
-# 🙏 Application de Gestion des Membres - Église de Dieu Maison de Lumière
+#  Application de Gestion des Membres - Église de Dieu Maison de Lumière
 
 Application web complète pour la gestion des membres de l'Église de Dieu Maison de Lumière avec authentification sécurisée.
 
-## 🔗 Accès rapide à l'application
+##  Accès rapide à l'application
 
 **URL principale:** http://localhost:3000/login.html
 
@@ -10,9 +10,9 @@ Application web complète pour la gestion des membres de l'Église de Dieu Maiso
 - **Admin:** admin@eglise.com / admin123
 - **Pasteur:** pasteur@eglise.com / pasteur123
 
-> ⚠️ Le serveur doit être démarré avec `npm start` depuis le dossier `backend/`
+>  Le serveur doit être démarré avec `npm start` depuis le dossier `backend/`
 
-## 📋 Fonctionnalités
+##  Fonctionnalités
 
 ### Authentification
 - Page de connexion sécurisée avec email et mot de passe
@@ -28,7 +28,7 @@ Application web complète pour la gestion des membres de l'Église de Dieu Maiso
 - **Supprimer** un membre avec confirmation
 - **Statistiques** : nombre total de membres
 
-## 🔐 Initialisation des comptes administrateurs
+##  Initialisation des comptes administrateurs
 
 Après avoir configuré Supabase, vous devez initialiser les comptes administrateurs.
 
@@ -135,9 +135,9 @@ Deux comptes administrateurs sont créés automatiquement :
 | admin@eglise.com | admin123 | Administrateur |
 | pasteur@eglise.com | pasteur123 | Pasteur |
 
-**⚠️ Important :** Changez ces mots de passe en production !
+** Important :** Changez ces mots de passe en production !
 
-## 🔧 Technologies utilisées
+##  Technologies utilisées
 
 ### Backend
 - **Node.js** - Environnement d'exécution JavaScript
@@ -173,7 +173,7 @@ Toutes les routes (sauf `/api/login`) nécessitent un token JWT dans l'en-tête 
 ### Statistiques
 - `GET /api/statistiques` - Obtenir les statistiques
 
-## 🎨 Personnalisation
+##  Personnalisation
 
 ### Ajouter votre logo
 
@@ -195,9 +195,9 @@ Dans `backend/server.js`, changez :
 const SECRET_KEY = 'Forestal@2025';
 ```
 
-**⚠️ Important :** Utilisez une clé complexe et unique en production !
+** Important :** Utilisez une clé complexe et unique en production !
 
-## 🔒 Sécurité
+##  Sécurité
 
 - ✅ Mots de passe hashés avec bcrypt (10 rounds)
 - ✅ Authentification JWT (tokens valides 24h)
@@ -215,14 +215,14 @@ const SECRET_KEY = 'Forestal@2025';
 6. **Activez les logs** pour le monitoring
 7. **Mettez en place des sauvegardes** régulières
 
-## 📱 Design responsive
+##  Design responsive
 
 L'interface s'adapte automatiquement :
 - **Desktop** : Vue complète avec grilles multi-colonnes
 - **Tablette** : Adaptation des grilles
 - **Mobile** : Vue en colonne unique optimisée
 
-## 🐛 Dépannage
+##  Dépannage
 
 ### Le serveur ne démarre pas
 - Vérifiez que Node.js est installé : `node --version`
@@ -238,7 +238,7 @@ L'interface s'adapte automatiquement :
 - Vérifiez les permissions du dossier backend
 - Supprimez `eglise.db` et redémarrez le serveur
 
-## 📚 Développement
+##  Développement
 
 ### Mode développement avec auto-reload
 ```bash
